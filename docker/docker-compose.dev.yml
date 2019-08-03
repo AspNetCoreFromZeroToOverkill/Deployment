@@ -1,0 +1,62 @@
+version: "3"
+networks:
+  internal-network:
+services:
+    reverse-proxy:
+        build: ./reverse-proxy/.
+        image: codingmilitia/reverseproxy:latest
+        ports:
+            - "80:80"
+            - "81:81"
+        networks:
+            - internal-network
+        depends_on:
+            - spa
+            - bff
+            - auth
+    spa:
+        build: ../../WebFrontend/client/.
+        image: codingmilitia/webfrontend/spa:latest
+        networks:
+            - internal-network
+        depends_on:
+            - bff
+    bff:
+        build: ../../WebFrontend/server/.
+        image: codingmilitia/webfrontend/bff:latest
+        networks:
+            - internal-network
+        depends_on:
+            - groupmanagement
+        environment:
+            - ASPNETCORE_ENVIRONMENT=DockerDevelopment
+    groupmanagement:
+        build: ../../GroupManagement/.
+        image: codingmilitia/groupmanagement:latest
+        networks:
+            - internal-network
+        depends_on:
+            - postgres-db
+        environment:
+            - ASPNETCORE_ENVIRONMENT=DockerDevelopment
+    auth:
+        build: ../../Auth/.
+        image: codingmilitia/auth:latest
+        networks:
+            internal-network:
+                aliases:
+                    - auth.playball.localhost # trick to be able to access auth from inside and outside the Docker network
+        depends_on:
+            - postgres-db
+        environment:
+            - ASPNETCORE_ENVIRONMENT=DockerDevelopment
+    postgres-db:
+        image: "postgres"
+        networks:
+            - internal-network
+        environment:
+            POSTGRES_USER: "user"
+            POSTGRES_PASSWORD: "pass"
+
+# Sample start command
+# docker-compose -f docker-compose.dev.yml up -d --build --force-recreate
