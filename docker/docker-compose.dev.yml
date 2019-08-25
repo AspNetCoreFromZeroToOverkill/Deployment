@@ -30,6 +30,20 @@ services:
             - groupmanagement
         environment:
             - ASPNETCORE_ENVIRONMENT=DockerDevelopment
+        volumes:
+            - bff-data-protection-keys:/var/lib/bff/dataprotectionkeys
+    # this is not the right way to implement multiple nodes with compose, but it's the quickest for the demo we're doing
+    another-bff:
+        build: ../../WebFrontend/server/.
+        image: codingmilitia/webfrontend/bff:latest
+        networks:
+            - internal-network
+        depends_on:
+            - groupmanagement
+        environment:
+            - ASPNETCORE_ENVIRONMENT=DockerDevelopment
+        volumes:
+            - bff-data-protection-keys:/var/lib/bff/dataprotectionkeys
     groupmanagement:
         build: ../../GroupManagement/.
         image: codingmilitia/groupmanagement:latest
@@ -50,6 +64,9 @@ services:
             - postgres-db
         environment:
             - ASPNETCORE_ENVIRONMENT=DockerDevelopment
+        volumes:
+            - auth-data-protection-keys:/var/lib/auth/dataprotectionkeys
+            - auth-signing-credentials:/var/lib/auth/developmentsigningcredentials
     postgres-db:
         image: "postgres"
         networks:
@@ -57,6 +74,11 @@ services:
         environment:
             POSTGRES_USER: "user"
             POSTGRES_PASSWORD: "pass"
+
+volumes:
+    bff-data-protection-keys:
+    auth-data-protection-keys:
+    auth-signing-credentials:
 
 # Sample start command
 # docker-compose -f docker-compose.dev.yml up -d --build
